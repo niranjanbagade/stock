@@ -1,0 +1,38 @@
+.stock-loader-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.stock-loader {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.stock-bar {
+  width: 8px;
+  height: 32px;
+  background: #22c55e;
+  border-radius: 4px;
+  animation: stock-bar 1s infinite;
+}
+
+.bar1 { animation-delay: 0s; }
+.bar2 { animation-delay: 0.15s; }
+.bar3 { animation-delay: 0.3s; }
+.bar4 { animation-delay: 0.45s; }
+.bar5 { animation-delay: 0.6s; }
+
+@keyframes stock-bar {
+  0%, 100% { height: 32px; background: #22c55e; }
+  50% { height: 60px; background: #16a34a; }
+}
+
+.stock-loader-text {
+  color: #64748b;
+  font-size: 1rem;
+  font-weight: 500;
+}
