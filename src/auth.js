@@ -24,6 +24,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   session: {
     maxAge: 3600, // 1 hour in seconds
   },
+  allowDangerousEmailAccountLinking: true, // Allow linking accounts with the same email
   callbacks: {
     async session({ session }) {
       const client = await clientPromise;

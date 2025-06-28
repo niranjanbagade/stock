@@ -79,7 +79,7 @@ export default function ApprovalsPage() {
         </div>
       )}
       {/* Top section with continue to profile */}
-      <div className="w-full max-w-xl flex items-center justify-between mt-8 mb-6 p-4 bg-gray-900 rounded shadow border border-gray-800">
+      <div className="w-full max-w-xl flex items-center justify-between mt-8 mb-2 p-4 bg-gray-900 rounded shadow border border-gray-800">
         <span className="text-lg font-semibold text-blue-300">
           Want to manage your profile?
         </span>
@@ -88,6 +88,18 @@ export default function ApprovalsPage() {
           onClick={() => router.push("/profile")}
         >
           Go to Profile
+        </button>
+      </div>
+      {/* Section to go to research */}
+      <div className="w-full max-w-xl flex items-center justify-between mb-6 p-4 bg-gray-900 rounded shadow border border-gray-800">
+        <span className="text-lg font-semibold text-purple-300">
+          Want to view or manage research?
+        </span>
+        <button
+          className="bg-purple-700 hover:bg-purple-800 text-white px-4 py-2 rounded shadow"
+          onClick={() => router.push("/admin/research")}
+        >
+          Go to Research
         </button>
       </div>
       <h1 className="text-2xl font-bold mb-4 text-gray-100">
