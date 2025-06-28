@@ -11,7 +11,9 @@ export default function StatusPage() {
   // Helper to convert Google Drive view links to direct image links
   function getDirectImageUrl(url) {
     if (!url) return url;
-    const match = url.match(/https?:\/\/drive\.google\.com\/file\/d\/([\w-]+)\//);
+    const match = url.match(
+      /https?:\/\/drive\.google\.com\/file\/d\/([\w-]+)\//
+    );
     if (match && match[1]) {
       return `https://drive.google.com/uc?export=view&id=${match[1]}`;
     }
@@ -32,7 +34,7 @@ export default function StatusPage() {
             return bDate - aDate;
           });
           const filteredUnapproved = (result.unapproved || []).filter(
-            (item) => item.email === userEmail
+            (item) => item.userEmail === userEmail
           );
           const unapprovedSorted = filteredUnapproved.sort((a, b) => {
             const aDate = a.date ? new Date(a.date) : new Date(0);
@@ -62,7 +64,10 @@ export default function StatusPage() {
 
   return (
     <div className="max-w-4xl mx-auto p-6 bg-white dark:bg-gray-900 min-h-screen">
-      <details open className="mb-4 border rounded-lg shadow dark:border-gray-700">
+      <details
+        open
+        className="mb-4 border rounded-lg shadow dark:border-gray-700"
+      >
         <summary className="cursor-pointer px-4 py-3 bg-green-100 text-green-700 font-semibold rounded-t-lg dark:bg-green-900 dark:text-green-200">
           Approved Analysis
         </summary>
