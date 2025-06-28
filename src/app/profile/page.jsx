@@ -44,7 +44,10 @@ export default function ProfilePage() {
     if (photo) {
       const formData = new FormData();
       formData.append("file", photo);
-      formData.append("customName", `${stockName}_${date}`);
+      formData.append(
+        "customName",
+        `${stockName}_${date}_${session.user.email.split("@")[0]}`
+      );
       const res = await fetch("/api/analysis/upload-photo", {
         method: "POST",
         body: formData,
@@ -307,7 +310,7 @@ export default function ProfilePage() {
       </h1>
       <form
         onSubmit={handleSubmit}
-        className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 w-full max-w-4xl mx-auto"
+        className="flex flex-col gap-6 bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 w-full max-w-4xl mx-auto"
       >
         <div className="mb-4">
           <label
@@ -464,10 +467,10 @@ export default function ProfilePage() {
             step="0.01"
           />
         </div>
-        {/* Pattern selectors in full width */}
-        <div className="md:col-span-2">
+        {/* Pattern selectors full width, but stacked vertically */}
+        <div>
           {candleType === "G" && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-4">
               <div className="mb-4 border p-4 rounded dark:border-gray-700">
                 <h3 className="text-lg font-bold mb-2 text-gray-900 dark:text-gray-100">
                   Choose Bullish Candlestick Pattern
@@ -509,7 +512,7 @@ export default function ProfilePage() {
             </div>
           )}
           {candleType === "R" && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-4">
               <div className="mb-4 border p-4 rounded dark:border-gray-700">
                 <h3 className="text-lg font-bold mb-2 text-gray-900 dark:text-gray-100">
                   Choose Bearish Candlestick Pattern
@@ -598,7 +601,7 @@ export default function ProfilePage() {
             onChange={(e) => setPhoto(e.target.files[0])}
           />
         </div>
-        <div className="md:col-span-2 flex gap-4">
+        <div className="flex gap-4">
           <button
             type="submit"
             className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full flex items-center justify-center"
