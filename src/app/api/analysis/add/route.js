@@ -1,12 +1,14 @@
-import { auth } from '../../../../auth';
-import clientPromise from '../../../../lib/mongodb';
-import { ObjectId } from 'mongodb';
+import { auth } from "../../../../auth";
+import clientPromise from "../../../../lib/mongodb";
+import { ObjectId } from "mongodb";
 
 export async function POST(request) {
   try {
     const session = await auth();
     if (!session || !session.user || !session.user._id) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+      });
     }
 
     const body = await request.json();
@@ -18,10 +20,15 @@ export async function POST(request) {
       userEmail: session.user.email, // store user email
       isAdminApproved: false,
       createdAt: new Date(),
+      isDeleted: false,
+      updatedAt: new Date(),
+      sellDate: "",
     };
-    await db.collection('analysis').insertOne(analysisData);
+    await db.collection("analysis").insertOne(analysisData);
     return new Response(JSON.stringify({ success: true }), { status: 201 });
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+    });
   }
 }

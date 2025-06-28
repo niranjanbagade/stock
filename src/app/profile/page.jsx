@@ -1,9 +1,11 @@
 "use client";
 import { useState, useRef } from "react";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 export default function ProfilePage() {
   const { data: session, status } = useSession();
+  const router = useRouter();
   const [stockName, setStockName] = useState("");
   const [date, setDate] = useState("");
   const [closePrice, setClosePrice] = useState(0);
@@ -257,7 +259,9 @@ export default function ProfilePage() {
   if (status === "loading") {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <span className="text-lg text-gray-700 dark:text-gray-200">Loading...</span>
+        <span className="text-lg text-gray-700 dark:text-gray-200">
+          Loading...
+        </span>
       </div>
     );
   }
@@ -265,15 +269,39 @@ export default function ProfilePage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="bg-white dark:bg-gray-800 p-8 rounded shadow text-center">
-          <h2 className="text-xl font-bold text-red-600 dark:text-red-400 mb-2">Access Denied</h2>
-          <p className="text-gray-700 dark:text-gray-200">Contact the admin to approve your request.</p>
+          <h2 className="text-xl font-bold text-red-600 dark:text-red-400 mb-2">
+            Access Denied
+          </h2>
+          <p className="text-gray-700 dark:text-gray-200">
+            Contact the admin to approve your request.
+          </p>
         </div>
       </div>
     );
   }
 
+  // Show status check section if user is logged in, not admin, and adminApproved is true
+  const showStatusSection =
+    session &&
+    session.user &&
+    session.user.adminApproved &&
+    !session.user.isAdmin;
+
   return (
     <div className="container mx-auto p-4 dark:bg-gray-900 min-h-screen">
+      {showStatusSection && (
+        <div className="mb-6 p-4 bg-blue-100 dark:bg-blue-900 rounded shadow flex items-center justify-between">
+          <span className="text-blue-800 dark:text-blue-200 font-semibold">
+            You can check the status of your submitted requests.
+          </span>
+          <button
+            className="ml-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+            onClick={() => router.push("/profile/status")}
+          >
+            Check Status
+          </button>
+        </div>
+      )}
       <h1 className="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">
         Stock Data Entry
       </h1>
@@ -578,9 +606,25 @@ export default function ProfilePage() {
             style={{ opacity: isSubmitting ? 0.7 : 1 }}
           >
             {isSubmitting ? (
-              <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+              <svg
+                className="animate-spin h-5 w-5 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                ></path>
               </svg>
             ) : (
               "Submit"

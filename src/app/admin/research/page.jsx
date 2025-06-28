@@ -12,6 +12,10 @@ export default function ResearchPage() {
   const [analysis, setAnalysis] = useState({ unapproved: [], approved: [] });
   const [loading, setLoading] = useState(true);
 
+  // State for sellDate and updating for each approved item
+  const [sellDateState, setSellDateState] = useState({});
+  const [updatingState, setUpdatingState] = useState({});
+
   useEffect(() => {
     if (
       status === "unauthenticated" ||
@@ -27,13 +31,29 @@ export default function ResearchPage() {
       fetch("/api/analysis/research")
         .then((res) => res.json())
         .then((result) => {
-          console.log("Research Analysis Data:", result);
-          setAnalysis(result);
+          // Sort unapproved and approved by date descending
+          const sortByDateDesc = arr =>
+            [...arr].sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+          setAnalysis({
+            unapproved: sortByDateDesc(result.unapproved || []),
+            approved: sortByDateDesc(result.approved || [])
+          });
           setLoading(false);
         })
         .catch(() => setLoading(false));
     }
   }, [status, data]);
+
+  // Update sellDateState when analysis.approved changes
+  useEffect(() => {
+    if (analysis.approved && Array.isArray(analysis.approved)) {
+      const initialSellDates = {};
+      analysis.approved.forEach(item => {
+        initialSellDates[item._id] = item.sellDate ? new Date(item.sellDate).toISOString().split('T')[0] : '';
+      });
+      setSellDateState(initialSellDates);
+    }
+  }, [analysis.approved]);
 
   // Helper to convert Google Drive view links to direct image links
   function getDirectImageUrl(url) {
@@ -107,14 +127,13 @@ export default function ResearchPage() {
                       </td>
                       <td className="px-4 py-2">
                         <button
-                          className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs"
+                          className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs mr-2"
                           onClick={async () => {
                             await fetch(`/api/analysis/research`, {
                               method: 'PATCH',
                               headers: { 'Content-Type': 'application/json' },
                               body: JSON.stringify({ id: item._id }),
                             });
-                            // Refresh analysis list
                             setLoading(true);
                             fetch("/api/analysis/research")
                               .then((res) => res.json())
@@ -126,6 +145,26 @@ export default function ResearchPage() {
                           }}
                         >
                           Approve
+                        </button>
+                        <button
+                          className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs"
+                          onClick={async () => {
+                            await fetch('/api/analysis/research/delete', {
+                              method: 'PATCH',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ id: item._id }),
+                            });
+                            setLoading(true);
+                            fetch("/api/analysis/research")
+                              .then((res) => res.json())
+                              .then((result) => {
+                                setAnalysis(result);
+                                setLoading(false);
+                              })
+                              .catch(() => setLoading(false));
+                          }}
+                        >
+                          Delete
                         </button>
                       </td>
                     </tr>
@@ -151,6 +190,7 @@ export default function ResearchPage() {
                     <th className="px-4 py-2">Date</th>
                     <th className="px-4 py-2">Final Verdict</th>
                     <th className="px-4 py-2">Photo</th>
+                    <th className="px-4 py-2">Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -169,7 +209,6 @@ export default function ResearchPage() {
                               height={40}
                               className="object-cover rounded"
                               onError={(e) => {
-                                // Hide Next.js Image and show fallback img if error
                                 e.target.style.display = 'none';
                                 const fallback = e.target.nextSibling;
                                 if (fallback) fallback.style.display = 'block';
@@ -188,6 +227,57 @@ export default function ResearchPage() {
                         ) : (
                           <span className="text-gray-400">No Photo</span>
                         )}
+                      </td>
+                      <td className="px-4 py-2">
+                        <input
+                          type="date"
+                          value={sellDateState[item._id] || ''}
+                          onChange={e => setSellDateState(prev => ({ ...prev, [item._id]: e.target.value }))}
+                          className="border rounded px-2 py-1 text-xs mr-2"
+                        />
+                        <button
+                          className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs disabled:opacity-50 mr-2"
+                          disabled={updatingState[item._id] || !sellDateState[item._id]}
+                          onClick={async () => {
+                            setUpdatingState(prev => ({ ...prev, [item._id]: true }));
+                            await fetch('/api/analysis/research/sell-date', {
+                              method: 'PATCH',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ id: item._id, sellDate: sellDateState[item._id] }),
+                            });
+                            setLoading(true);
+                            fetch("/api/analysis/research")
+                              .then((res) => res.json())
+                              .then((result) => {
+                                setAnalysis(result);
+                                setLoading(false);
+                              })
+                              .catch(() => setLoading(false));
+                            setUpdatingState(prev => ({ ...prev, [item._id]: false }));
+                          }}
+                        >
+                          {updatingState[item._id] ? 'Updating...' : 'Update Sell Date'}
+                        </button>
+                        <button
+                          className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs"
+                          onClick={async () => {
+                            await fetch('/api/analysis/research/delete', {
+                              method: 'PATCH',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ id: item._id }),
+                            });
+                            setLoading(true);
+                            fetch("/api/analysis/research")
+                              .then((res) => res.json())
+                              .then((result) => {
+                                setAnalysis(result);
+                                setLoading(false);
+                              })
+                              .catch(() => setLoading(false));
+                          }}
+                        >
+                          Delete
+                        </button>
                       </td>
                     </tr>
                   ))}
