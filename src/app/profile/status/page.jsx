@@ -7,6 +7,7 @@ export default function StatusPage() {
   const { data: session, status } = useSession();
   const [analysis, setAnalysis] = useState({ unapproved: [], approved: [] });
   const [loading, setLoading] = useState(true);
+  const [notePopup, setNotePopup] = useState({ open: false, stockName: '', note: '' });
 
   // Helper to convert Google Drive view links to direct image links
   function getDirectImageUrl(url) {
@@ -51,6 +52,13 @@ export default function StatusPage() {
     }
   }, [status, session]);
 
+  function handleOpenNotePopup(item) {
+    setNotePopup({ open: true, stockName: item.stockName || 'N/A', note: item.note || '' });
+  }
+  function handleCloseNotePopup() {
+    setNotePopup({ open: false, stockName: '', note: '' });
+  }
+
   if (status === "loading" || loading) {
     return (
       <div className="flex items-center justify-center h-full min-h-screen">
@@ -94,7 +102,10 @@ export default function StatusPage() {
                       Sell Date
                     </th>
                     <th className="px-4 py-2 text-gray-900 dark:text-gray-100">
-                      Photo
+                      Chart
+                    </th>
+                    <th className="px-4 py-2 text-gray-900 dark:text-gray-100">
+                      Note
                     </th>
                   </tr>
                 </thead>
@@ -170,6 +181,26 @@ export default function StatusPage() {
                           </span>
                         )}
                       </td>
+                      <td className="px-4 py-2">
+                        {item.note && item.note.trim() !== "" ? (
+                          <>
+                            <span>{item.note.slice(0, 10)}...</span>
+                            <button
+                              className="ml-2 text-blue-500 hover:text-blue-700 focus:outline-none"
+                              onClick={() => handleOpenNotePopup(item)}
+                              title="View Note"
+                              type="button"
+                            >
+                              {/* Info icon */}
+                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 inline">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 17v-4m0-4h.01M12 3a9 9 0 100 18 9 9 0 000-18z" />
+                              </svg>
+                            </button>
+                          </>
+                        ) : (
+                          <span className="text-gray-400 dark:text-gray-500">-</span>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -205,7 +236,10 @@ export default function StatusPage() {
                       Sell Date
                     </th>
                     <th className="px-4 py-2 text-gray-900 dark:text-gray-100">
-                      Photo
+                      Chart
+                    </th>
+                    <th className="px-4 py-2 text-gray-900 dark:text-gray-100">
+                      Note
                     </th>
                   </tr>
                 </thead>
@@ -281,6 +315,26 @@ export default function StatusPage() {
                           </span>
                         )}
                       </td>
+                      <td className="px-4 py-2">
+                        {item.note && item.note.trim() !== "" ? (
+                          <>
+                            <span>{item.note.slice(0, 10)}...</span>
+                            <button
+                              className="ml-2 text-blue-500 hover:text-blue-700 focus:outline-none"
+                              onClick={() => handleOpenNotePopup(item)}
+                              title="View Note"
+                              type="button"
+                            >
+                              {/* Info icon */}
+                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 inline">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 17v-4m0-4h.01M12 3a9 9 0 100 18 9 9 0 000-18z" />
+                              </svg>
+                            </button>
+                          </>
+                        ) : (
+                          <span className="text-gray-400 dark:text-gray-500">-</span>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -289,6 +343,26 @@ export default function StatusPage() {
           )}
         </div>
       </details>
+      {notePopup.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg max-w-md w-full p-6 relative">
+            <button
+              className="absolute top-2 right-2 text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 focus:outline-none"
+              onClick={handleCloseNotePopup}
+              title="Close"
+              type="button"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <h2 className="text-lg font-semibold mb-2">{notePopup.stockName}</h2>
+            <div className="text-gray-800 dark:text-gray-100 whitespace-pre-line break-words">
+              {notePopup.note}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -59,6 +59,25 @@ export default function ApprovalsPage() {
     setShowModal(false);
   };
 
+  const handleReject = async (userId) => {
+    setLoading(userId);
+    setShowModal("reject");
+    try {
+      const res = await fetch("/api/admin/reject-user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId }),
+      });
+      if (res.ok) {
+        await fetchUsers();
+      }
+    } catch (e) {
+      // Optionally log or handle error
+    }
+    setLoading(false);
+    setShowModal(false);
+  };
+
   if (status === "loading" || fetching) {
     return (
       <div className="flex items-center justify-center h-full min-h-screen">
@@ -74,20 +93,20 @@ export default function ApprovalsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
           <div className="bg-gray-900 rounded-lg p-8 flex flex-col items-center shadow-lg">
             <Loading />
-            <span className="mt-4 text-gray-200">Approving user...</span>
+            <span className="mt-4 text-gray-200">{showModal === "reject" ? "Rejecting user..." : "Approving user..."}</span>
           </div>
         </div>
       )}
       {/* Top section with continue to profile */}
       <div className="w-full max-w-xl flex items-center justify-between mt-8 mb-2 p-4 bg-gray-900 rounded shadow border border-gray-800">
         <span className="text-lg font-semibold text-blue-300">
-          Want to manage your profile?
+          Want to add analysis ?
         </span>
         <button
           className="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded shadow"
           onClick={() => router.push("/profile")}
         >
-          Go to Profile
+          Go to Form
         </button>
       </div>
       {/* Section to go to research */}
@@ -132,13 +151,22 @@ export default function ApprovalsPage() {
                     <span className="text-gray-400 text-sm">{user.email}</span>
                   </div>
                 </div>
-                <button
-                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow disabled:opacity-50 flex items-center justify-center min-w-[90px] min-h-[32px]"
-                  onClick={() => handleApprove(user._id)}
-                  disabled={!!loading}
-                >
-                  Approve
-                </button>
+                <div className="flex items-center">
+                  <button
+                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow disabled:opacity-50 flex items-center justify-center min-w-[90px] min-h-[32px] mr-2"
+                    onClick={() => handleApprove(user._id)}
+                    disabled={!!loading}
+                  >
+                    Approve
+                  </button>
+                  <button
+                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded shadow disabled:opacity-50 flex items-center justify-center min-w-[90px] min-h-[32px]"
+                    onClick={() => handleReject(user._id)}
+                    disabled={!!loading}
+                  >
+                    Reject
+                  </button>
+                </div>
               </li>
             );
           })}

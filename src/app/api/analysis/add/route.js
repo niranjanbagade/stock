@@ -23,6 +23,7 @@ export async function POST(request) {
       isDeleted: false,
       updatedAt: new Date(),
       sellDate: "",
+      note: "",
     };
     await db.collection("analysis").insertOne(analysisData);
     return new Response(JSON.stringify({ success: true }), { status: 201 });

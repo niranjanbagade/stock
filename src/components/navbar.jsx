@@ -70,6 +70,29 @@ export default function Navbar() {
           >
             Welcome, {session.user?.name}
           </span>
+          {session.user?.isAdmin && (
+            <button
+              onClick={() => (window.location.href = "/admin/research")}
+              style={{
+                background: "#3b82f6",
+                color: "#fff",
+                border: "none",
+                borderRadius: "6px",
+                padding: "0.28rem 0.85rem",
+                fontWeight: 500,
+                fontSize: "0.88rem",
+                cursor: "pointer",
+                transition: "background 0.2s",
+                boxShadow: "0 1px 4px 0 rgba(0,0,0,0.10)",
+              }}
+              onMouseOver={(e) => (e.currentTarget.style.background = "#2563eb")}
+              onFocus={(e) => (e.currentTarget.style.background = "#2563eb")}
+              onMouseOut={(e) => (e.currentTarget.style.background = "#3b82f6")}
+              onBlur={(e) => (e.currentTarget.style.background = "#3b82f6")}
+            >
+              Research
+            </button>
+          )}
           <button
             onClick={() => signOut({ callbackUrl: "/" })}
             style={{

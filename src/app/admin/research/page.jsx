@@ -14,6 +14,7 @@ export default function ResearchPage() {
 
   // State for sellDate and updating for each approved item
   const [sellDateState, setSellDateState] = useState({});
+  const [noteState, setNoteState] = useState({}); // note state for each approved item
   const [updatingState, setUpdatingState] = useState({});
 
   useEffect(() => {
@@ -44,14 +45,17 @@ export default function ResearchPage() {
     }
   }, [status, data]);
 
-  // Update sellDateState when analysis.approved changes
+  // Update sellDateState and noteState when analysis.approved changes
   useEffect(() => {
     if (analysis.approved && Array.isArray(analysis.approved)) {
       const initialSellDates = {};
+      const initialNotes = {};
       analysis.approved.forEach(item => {
         initialSellDates[item._id] = item.sellDate ? new Date(item.sellDate).toISOString().split('T')[0] : '';
+        initialNotes[item._id] = item.note || '';
       });
       setSellDateState(initialSellDates);
+      setNoteState(initialNotes);
     }
   }, [analysis.approved]);
 
@@ -86,7 +90,8 @@ export default function ResearchPage() {
                     <th className="px-4 py-2">Stock Name</th>
                     <th className="px-4 py-2">Date</th>
                     <th className="px-4 py-2">Final Verdict</th>
-                    <th className="px-4 py-2">Photo</th>
+                    <th className="px-4 py-2">Chart</th> {/* Changed from Photo to Chart */}
+                    <th className="px-4 py-2">User Email</th> {/* Only in unapproved section */}
                     <th className="px-4 py-2">Action</th>
                   </tr>
                 </thead>
@@ -125,6 +130,7 @@ export default function ResearchPage() {
                           <span className="text-gray-400">No Photo</span>
                         )}
                       </td>
+                      <td className="px-4 py-2">{item.userEmail || 'N/A'}</td> {/* New column value */}
                       <td className="px-4 py-2">
                         <button
                           className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs mr-2"
@@ -189,7 +195,7 @@ export default function ResearchPage() {
                     <th className="px-4 py-2">Stock Name</th>
                     <th className="px-4 py-2">Date</th>
                     <th className="px-4 py-2">Final Verdict</th>
-                    <th className="px-4 py-2">Photo</th>
+                    <th className="px-4 py-2">Chart</th> {/* Changed from Photo to Chart */}
                     <th className="px-4 py-2">Action</th>
                   </tr>
                 </thead>
@@ -234,6 +240,7 @@ export default function ResearchPage() {
                           value={sellDateState[item._id] || ''}
                           onChange={e => setSellDateState(prev => ({ ...prev, [item._id]: e.target.value }))}
                           className="border rounded px-2 py-1 text-xs mr-2"
+                          style={{ width: 180, height: 32 }}
                         />
                         <button
                           className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs disabled:opacity-50 mr-2"
@@ -258,8 +265,41 @@ export default function ResearchPage() {
                         >
                           {updatingState[item._id] ? 'Updating...' : 'Update Sell Date'}
                         </button>
+                        <div className="mt-2 flex items-center">
+                          <input
+                            type="text"
+                            value={noteState[item._id] || ''}
+                            onChange={e => setNoteState(prev => ({ ...prev, [item._id]: e.target.value }))}
+                            className="border rounded px-2 py-1 text-xs mr-2"
+                            placeholder="Add note..."
+                            style={{ width: 180, height: 48 }}
+                          />
+                          <button
+                            className="bg-purple-500 hover:bg-purple-600 text-white px-3 py-1 rounded text-xs disabled:opacity-50"
+                            disabled={updatingState['note-' + item._id] || !noteState[item._id]}
+                            onClick={async () => {
+                              setUpdatingState(prev => ({ ...prev, ['note-' + item._id]: true }));
+                              await fetch('/api/analysis/research/note', {
+                                method: 'PATCH',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ id: item._id, note: noteState[item._id] }),
+                              });
+                              setLoading(true);
+                              fetch("/api/analysis/research")
+                                .then((res) => res.json())
+                                .then((result) => {
+                                  setAnalysis(result);
+                                  setLoading(false);
+                                })
+                                .catch(() => setLoading(false));
+                              setUpdatingState(prev => ({ ...prev, ['note-' + item._id]: false }));
+                            }}
+                          >
+                            {updatingState['note-' + item._id] ? 'Updating...' : 'Update Note'}
+                          </button>
+                        </div>
                         <button
-                          className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs"
+                          className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs mt-2"
                           onClick={async () => {
                             await fetch('/api/analysis/research/delete', {
                               method: 'PATCH',
@@ -276,7 +316,7 @@ export default function ResearchPage() {
                               .catch(() => setLoading(false));
                           }}
                         >
-                          Delete
+                          Delete Analysis
                         </button>
                       </td>
                     </tr>

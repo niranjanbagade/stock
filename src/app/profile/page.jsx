@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef } from "react";
+import React, { useState, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
@@ -10,8 +10,8 @@ export default function ProfilePage() {
   const [date, setDate] = useState("");
   const [closePrice, setClosePrice] = useState(0);
   const [openPrice, setOpenPrice] = useState(0);
-  const [candleType, setCandleType] = useState("G");
-  const [volumeChange, setVolumeChange] = useState("B");
+  const [candleType, setCandleType] = useState("");
+  const [volumeChange, setVolumeChange] = useState("");
   const [submittedData, setSubmittedData] = useState(null);
   const [bullishPattern, setBullishPattern] = useState("");
   const [bearishPattern, setBearishPattern] = useState("");
@@ -31,6 +31,9 @@ export default function ProfilePage() {
   const [apiStatus, setApiStatus] = useState(null);
   const [photo, setPhoto] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [pendingData, setPendingData] = useState(null);
+  const [isPopupSubmitting, setIsPopupSubmitting] = useState(false);
   const toastTimeout = useRef(null);
 
   const handleSubmit = async (e) => {
@@ -39,59 +42,44 @@ export default function ProfilePage() {
       alert("Please fill in all fields.");
       return;
     }
+    // Don't upload photo or call API here
     setIsSubmitting(true);
-    let photoUrl = "";
-    if (photo) {
-      const formData = new FormData();
-      formData.append("file", photo);
-      formData.append(
-        "customName",
-        `${stockName}_${date}_${session.user.email.split("@")[0]}`
-      );
-      const res = await fetch("/api/analysis/upload-photo", {
-        method: "POST",
-        body: formData,
-      });
-      if (res.ok) {
-        const data = await res.json();
-        photoUrl = data.url;
-      } else {
-        setApiStatus("Error uploading photo");
-        setIsSubmitting(false);
-        return;
-      }
-    }
-    setSupport(
+    const tempSupportType =
       candleType === "G"
         ? parseFloat((parseFloat(openPrice) + parseFloat(closePrice)) / 2)
-        : low
-    );
-    setResistance(
+        : low;
+    setSupport(tempSupportType);
+    const tempResistance =
       candleType === "G"
         ? high
-        : parseFloat((parseFloat(openPrice) + parseFloat(closePrice)) / 2)
+        : parseFloat((parseFloat(openPrice) + parseFloat(closePrice)) / 2);
+    setResistance(tempResistance);
+    const tempVerdict = verdictHelper(
+      candleType,
+      volumeChange,
+      movingAverage,
+      bullishPattern,
+      bearishPattern,
+      bullishPricePattern,
+      bearishPricePattern
     );
-    setVerdict(
-      verdictHelper(
-        candleType,
-        volumeChange,
-        movingAverage,
-        bullishPattern,
-        bearishPattern,
-        bullishPricePattern,
-        bearishPricePattern
-      )
+    setVerdict(tempVerdict);
+    const tempStopLoss = calculateStopLoss(
+      tempVerdict,
+      closePrice,
+      tempSupportType,
+      tempResistance
     );
-    setStopLoss(calculateStopLoss(verdict, closePrice, support, resistance));
-    setTarget(
+    setStopLoss(tempStopLoss);
+    const tempTarget =
       candleType === "G"
         ? getBullishTarget(bullishPricePattern, x, base)
-        : getBearishTarget(bearishPricePattern, x, base)
-    );
-    var risk = closePrice - stopLoss;
-    var reward = target - closePrice;
-    var riskRewardRatio = reward / risk;
-    var finalVerdict = riskRewardRatio >= 3 ? "B" : "S";
+        : getBearishTarget(bearishPricePattern, x, base);
+    setTarget(tempTarget);
+    const risk = closePrice - tempStopLoss;
+    const reward = tempTarget - closePrice;
+    const riskRewardRatio = reward / risk;
+    const finalVerdict = riskRewardRatio >= 3 ? "B" : "S";
     const data = {
       stockName,
       date,
@@ -104,29 +92,67 @@ export default function ProfilePage() {
       bullishPricePattern,
       bearishPricePattern,
       x,
-      target,
-      support,
-      resistance,
-      verdict,
-      stopLoss,
+      target: tempTarget,
+      support: tempSupportType,
+      resistance: tempResistance,
+      verdict: tempVerdict,
+      stopLoss: tempStopLoss,
       risk,
       reward,
       riskRewardRatio,
       finalVerdict,
-      photoUrl, // add photoUrl to the object
+      // photoUrl will be added after upload in popup submit
     };
-    setSubmittedData(data);
-    // API integration
+    setPendingData(data);
+    setShowConfirm(true);
+    setIsSubmitting(false);
+  };
+
+  const handlePopupSubmit = async () => {
+    setIsPopupSubmitting(true);
     setApiStatus(null);
+    let photoUrl = "";
+    let dataToSend = { ...pendingData };
+    if (photo) {
+      try {
+        const formData = new FormData();
+        formData.append("file", photo);
+        formData.append(
+          "customName",
+          `${pendingData.stockName}_${pendingData.date}_${
+            session.user.email.split("@")[0]
+          }`
+        );
+        const res = await fetch("/api/analysis/upload-photo", {
+          method: "POST",
+          body: formData,
+        });
+        if (res.ok) {
+          const data = await res.json();
+          photoUrl = data.url;
+          dataToSend.photoUrl = photoUrl;
+        } else {
+          setApiStatus("Error uploading photo");
+          setIsPopupSubmitting(false);
+          return;
+        }
+      } catch (err) {
+        setApiStatus("Error uploading photo");
+        setIsPopupSubmitting(false);
+        return;
+      }
+    }
     try {
       const res = await fetch("/api/analysis/add", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify(dataToSend),
       });
       if (res.ok) {
         setApiStatus("Analysis submitted successfully.");
         handleClear();
+        setShowConfirm(false);
+        setPendingData(null);
         if (toastTimeout.current) clearTimeout(toastTimeout.current);
         toastTimeout.current = setTimeout(() => setApiStatus(null), 3500);
       } else {
@@ -136,7 +162,7 @@ export default function ProfilePage() {
     } catch (err) {
       setApiStatus("Error: " + err.message);
     }
-    setIsSubmitting(false);
+    setIsPopupSubmitting(false);
   };
 
   const handleClear = () => {
@@ -144,8 +170,8 @@ export default function ProfilePage() {
     setDate("");
     setClosePrice(0);
     setOpenPrice(0);
-    setCandleType("G");
-    setVolumeChange("B");
+    setCandleType("");
+    setVolumeChange("");
     setSubmittedData(null);
     setBullishPattern("");
     setBearishPattern("");
@@ -290,8 +316,104 @@ export default function ProfilePage() {
     session.user.adminApproved &&
     !session.user.isAdmin;
 
+  // Helper to check if all required fields are filled
+  const isFormValid =
+    stockName &&
+    date &&
+    candleType &&
+    volumeChange &&
+    movingAverage &&
+    openPrice !== "" &&
+    closePrice !== "" &&
+    high !== "" &&
+    low !== "" &&
+    x !== "" &&
+    base !== "" &&
+    photo &&
+    ((candleType === "G" && bullishPattern && bullishPricePattern) ||
+      (candleType === "R" && bearishPattern && bearishPricePattern));
+
   return (
     <div className="container mx-auto p-4 dark:bg-gray-900 min-h-screen">
+      {/* Confirmation Popup */}
+      {showConfirm && pendingData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 w-full max-w-md relative">
+            <button
+              className="absolute top-2 right-2 text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"
+              onClick={() => {
+                setShowConfirm(false);
+                setPendingData(null);
+              }}
+              disabled={isPopupSubmitting}
+            >
+              &times;
+            </button>
+            <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100">
+              Confirm Submission
+            </h2>
+            <div className="mb-4">
+              <div>
+                <span className="font-semibold">Stock Name:</span>{" "}
+                {pendingData.stockName}
+              </div>
+              <div>
+                <span className="font-semibold">Risk Reward Ratio:</span>{" "}
+                {pendingData.riskRewardRatio?.toFixed(2)}
+              </div>
+              <div>
+                <span className="font-semibold">Final Verdict:</span>{" "}
+                <span
+                  className={
+                    pendingData.finalVerdict === "B"
+                      ? "text-green-600 font-bold"
+                      : pendingData.finalVerdict === "S"
+                      ? "text-red-600 font-bold"
+                      : ""
+                  }
+                >
+                  {pendingData.finalVerdict === "B"
+                    ? "Buy"
+                    : pendingData.finalVerdict === "S"
+                    ? "Sell"
+                    : pendingData.finalVerdict}
+                </span>
+              </div>
+            </div>
+            <button
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full flex items-center justify-center"
+              onClick={handlePopupSubmit}
+              disabled={isPopupSubmitting}
+              style={{ opacity: isPopupSubmitting ? 0.7 : 1 }}
+            >
+              {isPopupSubmitting ? (
+                <svg
+                  className="animate-spin h-5 w-5 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                  ></path>
+                </svg>
+              ) : (
+                "Submit Analysis"
+              )}
+            </button>
+          </div>
+        </div>
+      )}
       {showStatusSection && (
         <div className="mb-6 p-4 bg-blue-100 dark:bg-blue-900 rounded shadow flex items-center justify-between">
           <span className="text-blue-800 dark:text-blue-200 font-semibold">
@@ -317,7 +439,7 @@ export default function ProfilePage() {
             htmlFor="stockName"
             className="block text-gray-700 dark:text-gray-200 font-bold mb-2"
           >
-            Stock Name:
+            NSE Name:
           </label>
           <input
             type="text"
@@ -358,6 +480,9 @@ export default function ProfilePage() {
             onChange={handleCandleTypeChange}
             required
           >
+            <option value="" disabled>
+              Select Last Candle Type
+            </option>
             <option value="G">Last Candle - Green</option>
             <option value="R">Last Candle - Red</option>
           </select>
@@ -376,6 +501,9 @@ export default function ProfilePage() {
             onChange={(e) => setVolumeChange(e.target.value)}
             required
           >
+            <option value="" disabled>
+              Select Volume Change
+            </option>
             <option value="B">Green Candle with Increased Volume</option>
             <option value="S">Red Candle with Increased Volume</option>
           </select>
@@ -394,6 +522,9 @@ export default function ProfilePage() {
             onChange={(e) => setMovingAverage(e.target.value)}
             required
           >
+            <option value="" disabled>
+              Select Moving Average
+            </option>
             <option value="B">Positive Crossover of 5-13 or 5-26</option>
             <option value="S">Negative Crossover of 5-13 or 5-26</option>
             <option value="I">No Crossover</option>
@@ -482,6 +613,9 @@ export default function ProfilePage() {
                   onChange={(e) => setBullishPattern(e.target.value)}
                   required
                 >
+                  <option value="" disabled>
+                    Select Bullish Candlestick Pattern
+                  </option>
                   <option value="B-BP">Bullish Piercing</option>
                   <option value="B-BE">Bullish Engulf</option>
                   <option value="B-HT">Hammer At The Top</option>
@@ -500,6 +634,9 @@ export default function ProfilePage() {
                   onChange={(e) => setBullishPricePattern(e.target.value)}
                   required
                 >
+                  <option value="" disabled>
+                    Select Bullish Price Pattern
+                  </option>
                   <option value="B-IHS">Inverted Head And Shoulder</option>
                   <option value="B-DB">Double Bottom</option>
                   <option value="B-BW">Bullish Wedge</option>
@@ -524,6 +661,9 @@ export default function ProfilePage() {
                   onChange={(e) => setBearishPattern(e.target.value)}
                   required
                 >
+                  <option value="" disabled>
+                    Select Bearish Candlestick Pattern
+                  </option>
                   <option value="S-BP">Bearish Pearcing</option>
                   <option value="S-BE">Bearish Engulfing</option>
                   <option value="S-ES">Evening Star</option>
@@ -542,6 +682,9 @@ export default function ProfilePage() {
                   onChange={(e) => setBearishPricePattern(e.target.value)}
                   required
                 >
+                  <option value="" disabled>
+                    Select Bearish Price Pattern
+                  </option>
                   <option value="S-HS">Head And Shoulder</option>
                   <option value="S-DT">Double Top</option>
                   <option value="S-BW">Bearish Wedge</option>
@@ -599,14 +742,15 @@ export default function ProfilePage() {
             accept="image/*"
             className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 dark:text-gray-100 dark:bg-gray-700 leading-tight focus:outline-none focus:shadow-outline"
             onChange={(e) => setPhoto(e.target.files[0])}
+            required
           />
         </div>
         <div className="flex gap-4">
           <button
             type="submit"
             className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full flex items-center justify-center"
-            disabled={isSubmitting}
-            style={{ opacity: isSubmitting ? 0.7 : 1 }}
+            disabled={isSubmitting || !isFormValid}
+            style={{ opacity: isSubmitting || !isFormValid ? 0.7 : 1 }}
           >
             {isSubmitting ? (
               <svg
