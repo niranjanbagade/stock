@@ -7,7 +7,11 @@ export default function StatusPage() {
   const { data: session, status } = useSession();
   const [analysis, setAnalysis] = useState({ unapproved: [], approved: [] });
   const [loading, setLoading] = useState(true);
-  const [notePopup, setNotePopup] = useState({ open: false, stockName: '', note: '' });
+  const [notePopup, setNotePopup] = useState({
+    open: false,
+    stockName: "",
+    note: "",
+  });
 
   // Helper to convert Google Drive view links to direct image links
   function getDirectImageUrl(url) {
@@ -53,10 +57,14 @@ export default function StatusPage() {
   }, [status, session]);
 
   function handleOpenNotePopup(item) {
-    setNotePopup({ open: true, stockName: item.stockName || 'N/A', note: item.note || '' });
+    setNotePopup({
+      open: true,
+      stockName: item.stockName || "N/A",
+      note: item.note || "",
+    });
   }
   function handleCloseNotePopup() {
-    setNotePopup({ open: false, stockName: '', note: '' });
+    setNotePopup({ open: false, stockName: "", note: "" });
   }
 
   if (status === "loading" || loading) {
@@ -106,6 +114,9 @@ export default function StatusPage() {
                     </th>
                     <th className="px-4 py-2 text-gray-900 dark:text-gray-100">
                       Note
+                    </th>
+                    <th className="px-4 py-2 text-gray-900 dark:text-gray-100">
+                      Risk/Reward Ratio
                     </th>
                   </tr>
                 </thead>
@@ -192,14 +203,32 @@ export default function StatusPage() {
                               type="button"
                             >
                               {/* Info icon */}
-                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 inline">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 17v-4m0-4h.01M12 3a9 9 0 100 18 9 9 0 000-18z" />
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                strokeWidth={1.5}
+                                stroke="currentColor"
+                                className="w-5 h-5 inline"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M12 17v-4m0-4h.01M12 3a9 9 0 100 18 9 9 0 000-18z"
+                                />
                               </svg>
                             </button>
                           </>
                         ) : (
-                          <span className="text-gray-400 dark:text-gray-500">-</span>
+                          <span className="text-gray-400 dark:text-gray-500">
+                            -
+                          </span>
                         )}
+                      </td>
+                      <td className="px-4 py-2 text-gray-900 dark:text-gray-100">
+                        {typeof item.riskRewardRatio === "number"
+                          ? item.riskRewardRatio.toFixed(3)
+                          : "-"}
                       </td>
                     </tr>
                   ))}
@@ -326,13 +355,26 @@ export default function StatusPage() {
                               type="button"
                             >
                               {/* Info icon */}
-                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 inline">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 17v-4m0-4h.01M12 3a9 9 0 100 18 9 9 0 000-18z" />
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                strokeWidth={1.5}
+                                stroke="currentColor"
+                                className="w-5 h-5 inline"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M12 17v-4m0-4h.01M12 3a9 9 0 100 18 9 9 0 000-18z"
+                                />
                               </svg>
                             </button>
                           </>
                         ) : (
-                          <span className="text-gray-400 dark:text-gray-500">-</span>
+                          <span className="text-gray-400 dark:text-gray-500">
+                            -
+                          </span>
                         )}
                       </td>
                     </tr>
@@ -352,11 +394,24 @@ export default function StatusPage() {
               title="Close"
               type="button"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                className="w-6 h-6"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
-            <h2 className="text-lg font-semibold mb-2">{notePopup.stockName}</h2>
+            <h2 className="text-lg font-semibold mb-2">
+              {notePopup.stockName}
+            </h2>
             <div className="text-gray-800 dark:text-gray-100 whitespace-pre-line break-words">
               {notePopup.note}
             </div>

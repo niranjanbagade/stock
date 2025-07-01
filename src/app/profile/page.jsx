@@ -35,6 +35,7 @@ export default function ProfilePage() {
   const [pendingData, setPendingData] = useState(null);
   const [isPopupSubmitting, setIsPopupSubmitting] = useState(false);
   const toastTimeout = useRef(null);
+  const photoInputRef = useRef(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -188,6 +189,8 @@ export default function ProfilePage() {
     setMovingAverage("");
     setX(0);
     setBase(0);
+    setPhoto(null);
+    if (photoInputRef.current) photoInputRef.current.value = "";
   };
 
   const handleCandleTypeChange = (e) => {
@@ -743,6 +746,7 @@ export default function ProfilePage() {
             className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 dark:text-gray-100 dark:bg-gray-700 leading-tight focus:outline-none focus:shadow-outline"
             onChange={(e) => setPhoto(e.target.files[0])}
             required
+            ref={photoInputRef}
           />
         </div>
         <div className="flex gap-4">
