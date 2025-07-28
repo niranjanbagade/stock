@@ -110,6 +110,9 @@ export default function StatusPage() {
                       Sell Date
                     </th>
                     <th className="px-4 py-2 text-gray-900 dark:text-gray-100">
+                      Stop Loss
+                    </th>
+                    <th className="px-4 py-2 text-gray-900 dark:text-gray-100">
                       Chart
                     </th>
                     <th className="px-4 py-2 text-gray-900 dark:text-gray-100">
@@ -149,6 +152,11 @@ export default function StatusPage() {
                             -
                           </span>
                         )}
+                      </td>
+                      <td className="px-4 py-2 text-gray-900 dark:text-gray-100">
+                        {item.stopLoss !== undefined && item.stopLoss !== null && item.stopLoss !== ""
+                          ? item.stopLoss.toFixed(2)
+                          : <span className="text-gray-400 dark:text-gray-500">-</span>}
                       </td>
                       <td className="px-4 py-2">
                         {item.photoUrl ? (
