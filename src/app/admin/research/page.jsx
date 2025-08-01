@@ -124,7 +124,16 @@ export default function ResearchPage() {
                       <td className="px-4 py-2">{item.stockName || "N/A"}</td>
                       <td className="px-4 py-2">
                         {item.date
-                          ? new Date(item.date).toLocaleDateString()
+                          ? (() => {
+                              const d = new Date(item.date);
+                              const day = String(d.getDate()).padStart(2, "0");
+                              const month = String(d.getMonth() + 1).padStart(
+                                2,
+                                "0"
+                              );
+                              const year = d.getFullYear();
+                              return `${day}/${month}/${year}`;
+                            })()
                           : "N/A"}
                       </td>
                       <td className="px-4 py-2">
@@ -244,6 +253,7 @@ export default function ResearchPage() {
                     <th className="px-4 py-2">Final Verdict</th>
                     <th className="px-4 py-2">Chart</th>
                     <th className="px-4 py-2">Risk/Reward</th>
+                    <th className="px-4 py-2">Term Period</th>
                     <th className="px-4 py-2">Stop Loss</th>
                     <th className="px-4 py-2">Action</th>
                   </tr>
@@ -254,7 +264,16 @@ export default function ResearchPage() {
                       <td className="px-4 py-2">{item.stockName || "N/A"}</td>
                       <td className="px-4 py-2">
                         {item.date
-                          ? new Date(item.date).toLocaleDateString()
+                          ? (() => {
+                              const d = new Date(item.date);
+                              const day = String(d.getDate()).padStart(2, "0");
+                              const month = String(d.getMonth() + 1).padStart(
+                                2,
+                                "0"
+                              );
+                              const year = d.getFullYear();
+                              return `${day}/${month}/${year}`;
+                            })()
                           : "N/A"}
                       </td>
                       <td className="px-4 py-2">
@@ -309,6 +328,16 @@ export default function ResearchPage() {
                         item.riskRewardRatio !== null
                           ? Number(item.riskRewardRatio).toFixed(3)
                           : "N/A"}
+                      </td>
+                      <td className="px-4 py-2">
+                        {(() => {
+                          if (!item.date) return "N/A";
+                          const itemDate = new Date(item.date);
+                          const now = new Date();
+                          const diffMs = now - itemDate;
+                          const diffWeeks = diffMs / (1000 * 60 * 60 * 24 * 7);
+                          return diffWeeks <= 5 ? "Close Term" : "Long Term";
+                        })()}
                       </td>
                       <td className="px-4 py-2">
                         {item.stopLoss !== undefined &&
